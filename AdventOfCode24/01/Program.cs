@@ -9,55 +9,42 @@ class Program
     {
         string inputFilePath = Path.Combine("Inputs", "input.txt");
         string input = File.ReadAllText(inputFilePath);
-        int firstResult = SolveFirstChallenge(input);
-        int secondResult = SolveSecondChallenge(input);
+
+        var (leftList, rightList) = ParseInput(input);
+
+        int firstResult = SolveFirstChallenge(leftList, rightList);
+        int secondResult = SolveSecondChallenge(leftList, rightList);
 
         Console.WriteLine($"First Result: {firstResult}");
         Console.WriteLine($"Second Result: {secondResult}");
     }
 
-    static int SolveFirstChallenge(string input)
+    static (List<int> leftList, List<int> rightList) ParseInput(string input)
     {
-        input = input.Replace("   ", " ");
-        input = input.Replace("\r\n", " ");
+        var numbers = input.Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                           .Select(int.Parse)
+                           .ToList();
 
-        List<string> stringList = input.Split(" ").ToList();
-        List<int> intList = stringList.ConvertAll(int.Parse);
-        List<int> leftList = intList.Where((x, i) => i % 2 == 0).ToList();
-        List<int> rightList = intList.Where((x, i) => i % 2 == 1).ToList();
+        var leftList = numbers.Where((_, i) => i % 2 == 0).ToList();
+        var rightList = numbers.Where((_, i) => i % 2 == 1).ToList();
 
+        return (leftList, rightList);
+    }
+
+    static int SolveFirstChallenge(List<int> leftList, List<int> rightList)
+    {
         leftList.Sort();
         rightList.Sort();
 
-        int sum = 0;
-
-        for (int i = 0; i < leftList.Count; i++)
-        {
-            sum += Math.Abs(leftList[i] - rightList[i]);
-        }
-
+        int sum = leftList.Zip(rightList, (left, right) => Math.Abs(left - right)).Sum();
         return sum;
     }
 
-    static int SolveSecondChallenge(string input)
+    static int SolveSecondChallenge(List<int> leftList, List<int> rightList)
     {
-        input = input.Replace("   ", " ");
-        input = input.Replace("\r\n", " ");
+        var rightCounts = rightList.GroupBy(x => x).ToDictionary(g => g.Key, g => g.Count());
 
-        List<string> stringList = input.Split(" ").ToList();
-        List<int> intList = stringList.ConvertAll(int.Parse);
-        List<int> leftList = intList.Where((x, i) => i % 2 == 0).ToList();
-        List<int> rightList = intList.Where((x, i) => i % 2 == 1).ToList();
-
-        int sum = 0;
-
-        for (int i = 0; i < leftList.Count; i++)
-        {
-            for (int j = 0; j < rightList.Count; j++)
-            {
-                sum += leftList[i] == rightList[j] ? leftList[i] : 0;
-            }
-        }
+        int sum = leftList.Sum(left => left * (rightCounts.ContainsKey(left) ? rightCounts[left] : 0));
 
         return sum;
     }
